@@ -29,7 +29,8 @@ class MenuState extends FlxState
 	override public function create():Void
 	{
 		super.create();
-    _warning = new FlxText(0, 0, 200, "Go into the settings and set your name first please! You won't regret it.", 12);
+    
+    _warning = new FlxText(0, 0, 500, "Go into the settings and set your name first please! You won't regret it.", 12);
 		_warning.visible = false;
     add(_warning);
     _title = new FlxSprite(0, 0, "assets/images/title.png");

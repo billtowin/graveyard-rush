@@ -23,6 +23,8 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 
+import flash.system.System;
+
 import playtomic.Leaderboards;
 
 import gameplay.characters.Spitter;
@@ -74,6 +76,9 @@ class ClassicPlayState extends FlxState
 	private var _breakDuration:Int = 60 * 6; //in frames
 	
 	private var _isGameOver:Bool = false;
+  private var _isSavingScore:Bool = false;
+  private var _wishesToGoToMenu:Bool = false;
+  private var _wishesToQuitGame:Bool = false;
 	
 	private var _bloodSplatter:FlxEmitter;
 	
@@ -85,16 +90,8 @@ class ClassicPlayState extends FlxState
 		super.create();	
 		
 		_ticks = 0;
-		setupMouseCursorIcon();
 		createSprites();
 		createTexts();
-	}
-	
-	private function setupMouseCursorIcon()
-	{
-		var sprite = new FlxSprite();
-		sprite.loadGraphic("assets/images/cursor_red.png");
-		FlxG.mouse.load(sprite.pixels);
 	}
 	
 	private function createSprites()
@@ -181,10 +178,18 @@ class ClassicPlayState extends FlxState
 	 * Function that is called once every frame.
 	 */
 	override public function update():Void
-	{		
+	{
 		if (_isGameOver && FlxG.mouse.justPressed) {
-			onGameOver(null);
+			onGameOver();
 		}
+    if ( FlxG.keys.justPressed.ESCAPE) {
+      _wishesToQuitGame = true;
+      killPlayer();
+    }
+    if ( FlxG.keys.justPressed.BACKSPACE) {
+      _wishesToGoToMenu = true;
+      killPlayer();
+    }
 		
 		if (!_isGameOver && !_isBreak && _ticks != 0 && _ticks % _battleDuration == 0)
 		{
@@ -303,7 +308,13 @@ class ClassicPlayState extends FlxState
 			FlxG.collide(_player, _enemyHorde) || 
 			FlxG.overlap(_player, _spitterHorde.getProjectiles()) )
 		{
-			FlxG.sound.play("assets/sounds/tombstoneUp.wav");
+      killPlayer();
+		}
+	}
+  
+  private function killPlayer()
+  {
+      FlxG.sound.play("assets/sounds/tombstoneUp.wav");
 			_tombstone.animation.play("popup");
 			_tombstone.visible = true;
 			_tombstone.x = _player.x;
@@ -315,9 +326,8 @@ class ClassicPlayState extends FlxState
 			_isGameOver = true;
 			launchBlood(_player.x, _player.y);
 			_player.disable();
-			FlxTimer.start(3, onGameOver);
-		}
-	}
+      onGameOver();
+  }
 	
 	private function checkForBulletOverlapOnEnemy(H:Horde)
 	{
@@ -397,30 +407,43 @@ class ClassicPlayState extends FlxState
 		_bloodSplatter.start(true, 0, 0, 1, 0);
 	}
 	
-	private function onGameOver(t:FlxTimer)
+	private function onGameOver()
 	{
-    	// basic score
-    var score:Dynamic = {
-		playername: FlxG.save.data.name,
-		points: Reg.score,
-		table: "highscores",
-		allowduplicates: true
-	};
-	
-    Leaderboards.save(score, submitComplete);
+    if (!_isSavingScore) {
+      _isSavingScore = true;
+      var score:Dynamic = {
+      playername: FlxG.save.data.name,
+      points: Reg.score,
+      table: "highscores",
+      allowduplicates: false
+      };
+      Leaderboards.save(score, submitComplete);
+    }
 	}
 
   function submitComplete(response:Dynamic): Void
   {
-      if(response.success)
-      {
-          trace("Score saved!");
-          Reg.score = 0;
-		      FlxG.resetState();  
-      }
-      else
-      {
-          // submission failed because of response.errorMessage with response.errorcode
-      }
+    if(response.success)
+    {
+        trace("Score saved!");
+    }
+    else
+    {
+        // submission failed because of response.errorMessage with response.errorcode
+    }
+    FlxTimer.start(1.0, onGameEnd);
+  }
+  
+  private function onGameEnd(t:FlxTimer)
+  {
+     Reg.score = 0;
+     if (_wishesToQuitGame) {
+       System.exit(0);
+     } else if (_wishesToGoToMenu) {
+        FlxG.switchState(new MenuState() );
+     } else {
+       FlxG.resetState();  
+     }
+     _isSavingScore = false;
   }
 }
