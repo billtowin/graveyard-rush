@@ -68,8 +68,9 @@ class ClassicPlayState extends FlxState
 	
 	private var _isBreak:Bool = false;
 	private var _breakTime:Int = 0;
-	private var BREAK_EVERY_X_FRAMES:Int = 60 * 15;
-	private var BREAK_DURATION_IN_FRAMES:Int = 60 * 6;
+	private var _battleDuration:Int = 60 * 15; //in frames
+	private var _battleDurationIncreaseFactor:Float = 1.05;
+	private var _breakDuration:Int = 60 * 6; //in frames
 	
 	private var _isGameOver:Bool = false;
 	
@@ -83,7 +84,6 @@ class ClassicPlayState extends FlxState
 		super.create();	
 		
 		_ticks = 0;
-		
 		setupMouseCursorIcon();
 		loadSaveData();
 		createSprites();
@@ -180,7 +180,7 @@ class ClassicPlayState extends FlxState
 		updateStatusText();
 		
 		if (Reg.high_score < 5) {
-			_hints = new FlxText(0, 0, Std.int(FlxG.width * 0.99), "WASD: move, Mouse: aim. Left click: shoot primary, Right click: shoot secondary (must pick one up)." +
+			_hints = new FlxText(0, 0, Std.int(FlxG.width * 0.99), "WASD: move, Mouse: aim. Left click: shoot primary, Right click: shoot secondary (must pick one up), + and - to change volume." +
 			" Gather present boxes to score points! Survive increasingly difficult Battle rounds interleaved with Rest rounds.", 12);
 			_hints.setPosition(2, FlxG.height * 0.9);
 			_hints.alpha = 1.0;
@@ -211,8 +211,10 @@ class ClassicPlayState extends FlxState
 			onGameOver(null);
 		}
 		
-		if (!_isBreak && _ticks != 0 && _ticks % BREAK_EVERY_X_FRAMES == 0)
+		if (!_isBreak && _ticks != 0 && _ticks % _battleDuration == 0)
 		{
+			_battleDuration = Math.round(_battleDuration * _battleDurationIncreaseFactor);
+			FlxG.sound.play("assets/sounds/roundSwitch.wav");
 			_zombieHorde.stopSpawning();
 			_spitterHorde.stopSpawning();
 			_isBreak = true;
@@ -221,8 +223,9 @@ class ClassicPlayState extends FlxState
 			_breakTime = _ticks;
 		}
 		
-		if (_ticks == 0 || _isBreak && _ticks - _breakTime >= BREAK_DURATION_IN_FRAMES)
+		if (_ticks == 0 || _isBreak && _ticks - _breakTime >= _breakDuration)
 		{
+			FlxG.sound.play("assets/sounds/roundSwitch.wav");
 			if ( _ticks != 0) {
 				_zombieHorde.rampUp();
 				if (_roundNumber >= 2)
@@ -245,6 +248,7 @@ class ClassicPlayState extends FlxState
 			}
 		}
 		if (_pickup.isActive() && _player.overlaps(_pickup)) {
+			FlxG.sound.play("assets/sounds/pickup1.wav");
 			var pickupSpot:FlxPoint = new FlxPoint(_pickup.x, _pickup.y);
 			var newWeap:FlxWeapon = _pickup.trigger(_player);
 			_weaponPopup.text = newWeap.name;
@@ -311,9 +315,9 @@ class ClassicPlayState extends FlxState
 	{
 		FlxG.collide(_wall, _player);
 		FlxG.collide(_wall, _crate);
-		FlxG.collide(_wall, _zombieHorde);
+		FlxG.collide(_wall, _enemyHorde);
 		FlxG.collide(_crate, _player);
-		FlxG.collide(_crate, _zombieHorde);
+		FlxG.collide(_crate, _enemyHorde);
 		FlxG.collide(_enemyHorde, _enemyHorde);
 		FlxG.collide(_tombstone, _enemyHorde);
 	}
@@ -332,6 +336,7 @@ class ClassicPlayState extends FlxState
 			FlxG.collide(_player, _enemyHorde) || 
 			FlxG.overlap(_player, _spitterHorde.getProjectiles()) )
 		{
+			FlxG.sound.play("assets/sounds/tombstoneUp.wav");
 			_tombstone.animation.play("popup");
 			_tombstone.visible = true;
 			_tombstone.x = _player.x;

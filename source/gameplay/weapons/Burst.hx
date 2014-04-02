@@ -5,6 +5,7 @@ import flixel.addons.weapon.FlxBullet;
 import flixel.FlxSprite;
 import flixel.util.FlxColor;
 import flixel.util.FlxPoint;
+import flixel.system.FlxSound;
 
 /**
  * ...
@@ -22,6 +23,8 @@ class Burst extends FlxWeapon
 		fireRate = 50;
 		bulletSpeed = 300;
 		bulletLifeSpan = 0.8;
+		onFireSound = new FlxSound();
+		onFireSound.loadEmbedded("assets/sounds/flamethrower.wav");
 	}
 	
 }

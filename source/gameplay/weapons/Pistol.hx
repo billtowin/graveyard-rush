@@ -3,6 +3,7 @@ package gameplay.weapons ;
 import flixel.addons.weapon.FlxWeapon;
 import flixel.addons.weapon.FlxBullet;
 import flixel.FlxSprite;
+import flixel.system.FlxSound;
 import flixel.util.FlxColor;
 
 /**
@@ -19,6 +20,8 @@ class Pistol extends FlxWeapon
 		fireRate = 500;
 		bulletSpeed = 450;
 		bulletLifeSpan = 0.9;
+		onFireSound = new FlxSound();
+		onFireSound.loadEmbedded("assets/sounds/pistol2.wav");
 	}
 	
 }

@@ -5,6 +5,7 @@ import flixel.addons.weapon.FlxBullet;
 import flixel.FlxSprite;
 import flixel.util.FlxColor;
 import flixel.util.FlxPoint;
+import flixel.system.FlxSound;
 
 
 //TODO develop more weapons and bullets (grenade bullets?)
@@ -25,5 +26,7 @@ class Shotgun extends FlxWeapon
 		
 		fireRate = 1;
 		bulletSpeed = 180;
+		onFireSound = new FlxSound();
+		onFireSound.loadEmbedded("assets/sounds/shotgun.wav");
 	}	
 }

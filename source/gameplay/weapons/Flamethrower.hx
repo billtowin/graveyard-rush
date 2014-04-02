@@ -5,6 +5,7 @@ import flixel.addons.weapon.FlxBullet;
 import flixel.FlxSprite;
 import flixel.util.FlxColor;
 import flixel.util.FlxPoint;
+import flixel.system.FlxSound;
 
 /**
  * ...
@@ -24,5 +25,7 @@ class Flamethrower extends FlxWeapon
 		fireRate = 150;
 		bulletSpeed = 150;
 		multiShot = 2;
+		onFireSound = new FlxSound();
+		onFireSound.loadEmbedded("assets/sounds/flamethrower.wav");
 	}	
 }

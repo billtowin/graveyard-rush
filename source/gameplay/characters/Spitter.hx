@@ -38,7 +38,7 @@ class Spitter extends Sprite
 		
 		_spit = new FlxWeapon("Spit", this, FlxBullet);
 		_spit.makePixelBullet(2, 7, 7, FlxColor.GREEN);
-		_spit.fireRate = 1;
+		_spit.fireRate = 400;
 		_spit.bulletSpeed = 120;
 		_spit.bulletLifeSpan = 2.0;
 	}
