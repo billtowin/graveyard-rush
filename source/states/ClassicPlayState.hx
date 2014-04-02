@@ -1,5 +1,6 @@
 package states;
 
+import flash.events.IOErrorEvent;
 import flash.text.TextFieldAutoSize;
 import flixel.addons.text.FlxTypeText;
 import flixel.addons.weapon.FlxBullet;
@@ -20,11 +21,13 @@ import flixel.util.FlxRect;
 import flixel.addons.weapon.FlxWeapon;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
-import gameplay.characters.Spitter;
 import flixel.util.FlxTimer;
+
+import playtomic.Leaderboards;
+
+import gameplay.characters.Spitter;
 import gameplay.Horde;
 import gameplay.SpitterHorde;
-
 import gameplay.Pickup;
 import gameplay.characters.Player;
 import gameplay.characters.Zombie;
@@ -53,9 +56,7 @@ class ClassicPlayState extends FlxState
 	private var _ticks:Int;
 	
 	private var _score:FlxText;
-	private var _highScore:FlxText;
 	private var _status:FlxText;
-	private var _hints:FlxText = null;
 	private var _weaponPopup:FlxText;
 	
 	
@@ -85,7 +86,6 @@ class ClassicPlayState extends FlxState
 		
 		_ticks = 0;
 		setupMouseCursorIcon();
-		loadSaveData();
 		createSprites();
 		createTexts();
 	}
@@ -95,14 +95,6 @@ class ClassicPlayState extends FlxState
 		var sprite = new FlxSprite();
 		sprite.loadGraphic("assets/images/cursor_red.png");
 		FlxG.mouse.load(sprite.pixels);
-	}
-	
-	private function loadSaveData()
-	{
-		Reg.high_score = FlxG.save.data.high_score;
-		if (FlxG.save.data.high_score == null) {
-			Reg.high_score = 0;
-		}
 	}
 	
 	private function createSprites()
@@ -170,23 +162,10 @@ class ClassicPlayState extends FlxState
 		_score.setPosition(1, 1);
 		add(_score);
 		
-		_highScore = new FlxText(0, 0, 200, "" + Reg.high_score, 12);
-		_highScore.setPosition(1, 1 + _score.textField.height);
-		add(_highScore);
-		
 		_status = new FlxText(0, 0, 160, "a", 12);
 		_status.setPosition(FlxG.width * 0.41, FlxG.height * 0.46 - _status.textField.height);
 		add(_status);
 		updateStatusText();
-		
-		if (Reg.high_score < 5) {
-			_hints = new FlxText(0, 0, Std.int(FlxG.width * 0.99), "WASD: move, Mouse: aim. Left click: shoot primary, Right click: shoot secondary (must pick one up), + and - to change volume." +
-			" Gather present boxes to score points! Survive increasingly difficult Battle rounds interleaved with Rest rounds.", 12);
-			_hints.setPosition(2, FlxG.height * 0.9);
-			_hints.alpha = 1.0;
-			FlxTween.singleVar(_hints, "alpha", 0.0, 10.0);
-			add(_hints);
-		}
 	}
 	
 	/**
@@ -202,16 +181,12 @@ class ClassicPlayState extends FlxState
 	 * Function that is called once every frame.
 	 */
 	override public function update():Void
-	{
-		if (FlxG.keys.justPressed.DELETE) {
-			resetHighScore();
-		}
-		
+	{		
 		if (_isGameOver && FlxG.mouse.justPressed) {
 			onGameOver(null);
 		}
 		
-		if (!_isBreak && _ticks != 0 && _ticks % _battleDuration == 0)
+		if (!_isGameOver && !_isBreak && _ticks != 0 && _ticks % _battleDuration == 0)
 		{
 			_battleDuration = Math.round(_battleDuration * _battleDurationIncreaseFactor);
 			FlxG.sound.play("assets/sounds/roundSwitch.wav");
@@ -223,7 +198,7 @@ class ClassicPlayState extends FlxState
 			_breakTime = _ticks;
 		}
 		
-		if (_ticks == 0 || _isBreak && _ticks - _breakTime >= _breakDuration)
+		if (!_isGameOver && (_ticks == 0 || _isBreak && _ticks - _breakTime >= _breakDuration))
 		{
 			FlxG.sound.play("assets/sounds/roundSwitch.wav");
 			if ( _ticks != 0) {
@@ -320,14 +295,6 @@ class ClassicPlayState extends FlxState
 		FlxG.collide(_crate, _enemyHorde);
 		FlxG.collide(_enemyHorde, _enemyHorde);
 		FlxG.collide(_tombstone, _enemyHorde);
-	}
-	
-	private function resetHighScore()
-	{
-		Reg.high_score = 0;
-		_highScore.text = "" + Reg.high_score;
-		FlxG.save.data.high_score = 0;
-		FlxG.save.flush();
 	}
 	
 	private function checkForGameOver()
@@ -432,14 +399,28 @@ class ClassicPlayState extends FlxState
 	
 	private function onGameOver(t:FlxTimer)
 	{
-		if (Reg.high_score < Reg.score)
-		{
-			Reg.high_score = Reg.score;
-			_highScore.text = "" + Reg.high_score;
-			FlxG.save.data.high_score = Reg.high_score;
-			FlxG.save.flush();
-		}
-		Reg.score = 0;
-		FlxG.resetState();
+    	// basic score
+    var score:Dynamic = {
+		playername: FlxG.save.data.name,
+		points: Reg.score,
+		table: "highscores",
+		allowduplicates: true
+	};
+	
+    Leaderboards.save(score, submitComplete);
 	}
+
+  function submitComplete(response:Dynamic): Void
+  {
+      if(response.success)
+      {
+          trace("Score saved!");
+          Reg.score = 0;
+		      FlxG.resetState();  
+      }
+      else
+      {
+          // submission failed because of response.errorMessage with response.errorcode
+      }
+  }
 }

@@ -8,6 +8,8 @@ import flixel.FlxG;
 
 import states.MenuState;
 
+import playtomic.Playtomic;
+
 class GameClass extends FlxGame
 {
 	var gameWidth:Int = Std.int(640 * 1.2); // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
@@ -34,7 +36,7 @@ class GameClass extends FlxGame
 			gameWidth = Math.ceil(stageWidth / zoom);
 			gameHeight = Math.ceil(stageHeight / zoom);
 		}
-
+    Playtomic.initialize("graveyard-rush-public", "graveyard-rush-private", "http://graveyard-rush.herokuapp.com/");
 		super(gameWidth, gameHeight, initialState, zoom, framerate, framerate, skipSplash, startFullscreen);
 	}
 }
